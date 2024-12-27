@@ -3,14 +3,9 @@ from sqlalchemy.orm import Session
 
 
 # 1. 質問を取得する（get）
-def read_questions(db: Session, user_id: str):
-    # ユーザーIDに基づいて質問を取得（質問を新しい順に取得）
-    questions = (
-        db.query(Question)
-        .filter(Question.user_id == user_id)
-        .order_by(Question.created_at.desc())
-        .all()
-    )
+def read_questions(db: Session):
+    # 質問を新しい順に取得
+    questions = db.query(Question).order_by(Question.created_at.desc()).all()
     return questions
 
 
@@ -51,3 +46,22 @@ def update_question(db: Session, user_id: str, question_id: str, new_data: dict)
         db.commit()
         db.refresh(question)  # 更新された質問を返す
     return question
+
+
+# 5. 質問を取得する（get）
+def read_questions_details(db: Session, question_id: str):
+    # Question.IDに基づいて質問を取得
+    questions = db.query(Question).filter(Question.id == question_id).first()
+    return questions
+
+
+# 6. 質問を取得する（get）
+def read_my_questions(db: Session, user_id: str):
+    # ユーザーIDに基づいて質問を取得（質問を新しい順に取得）
+    questions = (
+        db.query(Question)
+        .filter(Question.user_id == user_id)
+        .order_by(Question.created_at.desc())
+        .all()
+    )
+    return questions

@@ -1,9 +1,15 @@
-import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
+from backend.model.answers import Answer  # noqa
 from backend.model.base import Base
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
-from sqlalchemy.dialects.postgresql import ARRAY, UUID
+from backend.model.bookmarks import Bookmark  # noqa
+from backend.model.likes import Like  # noqa
+from backend.model.notifications import Notification  # noqa
+from backend.model.tags import Tag  # noqa
+from backend.model.users import User  # noqa
+from pydantic import BaseModel
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 
@@ -11,34 +17,44 @@ class Question(Base):
     __tablename__ = "questions"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_name = Column(String(255), nullable=False)
-    title = Column(String(255), nullable=False)
-    content = Column(String, nullable=False)
-    user_id = Column(UUID, ForeignKey("users.id"), nullable=False)  # ユーザーのIDを参照
-    is_anonymous = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    likes = Column(Integer, default=0)
-    bookmarks = Column(Integer, default=0)
-    is_liked = Column(Boolean, default=False)
-    is_bookmarked = Column(Boolean, default=False)
-    tags = Column(ARRAY(String), nullable=False)  # タグは配列として保存
+    title = Column(String(255), nullable=False)  # 質問のタイトル
+    user_id = Column(
+        UUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )  # 投稿者
+    is_anonymous = Column(Boolean, default=True)  # 匿名フラグ
+    content = Column(Text, nullable=False)  # 質問の本文
+    created_at = Column(
+        DateTime, default=lambda: datetime.utcnow() + timedelta(hours=9)
+    )  # 作成日時
 
-    # リレーション（Userとの関連）
-    user = relationship("User", back_populates="questions")
+    # リレーションシップ
+    user = relationship("User", backref="question")
+    answer = relationship("Answer", backref="question")
+    tags = relationship("Tag", secondary="question_tags", backref="question")
+    likes = relationship("Like", backref="question")
+    bookmarks = relationship("Bookmark", backref="question")
+    notifications = relationship("Notification", backref="question")
 
-    def __init__(
-        self,
-        user_name: str,
-        title: str,
-        content: str,
-        user_id: uuid.UUID,
-        is_anonymous: bool,
-        tags: list,
-    ):
-        self.user_name = user_name
-        self.title = title
-        self.content = content
-        self.user_id = user_id
-        self.is_anonymous = is_anonymous
-        self.tags = tags
+
+class QuestionSchema(BaseModel):
+    title: str
+    user_id: str
+    is_anonymous: bool
+    content: str
+    tags: list[Tag] = []
+
+    class Config:
+        arbitrary_types_allowed = True
+        orm_mode = True
+
+    # def __init__(
+    #     self,
+    #     title: str,
+    #     user_id: uuid.UUID,
+    #     body: str,
+    #     is_anonymous: bool = True,
+    # ):
+    #     self.title = title
+    #     self.user_id = user_id
+    #     self.body = body
+    #     self.is_anonymous = is_anonymous

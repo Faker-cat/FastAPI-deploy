@@ -11,14 +11,14 @@ services:
       POSTGRES_USER: 'user'
       POSTGRES_PASSWORD: 'postgres'
   
-  fastapi:
-    build: ./backend
-    volumes:
-      - ./backend:/backend
-    ports:
-      - 8000:8000
-    depends_on:
-      - db
+  # fastapi:
+  #   build: ./backend
+  #   volumes:
+  #     - ./backend:/backend
+  #   ports:
+  #     - 8000:8000
+  #   depends_on:
+  #     - db
 
 volumes:
   db-store:
