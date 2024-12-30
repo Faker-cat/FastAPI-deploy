@@ -1,5 +1,10 @@
 from typing import Any, Dict
 
+from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
 from backend.database.questions_database import (
     create_question,
     delete_question,
@@ -11,10 +16,6 @@ from backend.database.questions_database import (
 from backend.middleware.database import get_db
 from backend.model.questions import Question, QuestionSchema
 from backend.model.users import User
-from fastapi import Depends, FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
 
 app = FastAPI()
 
@@ -41,12 +42,14 @@ class UserCreate(BaseModel):
 
 
 # 質問
-
-
 # 1.質問一覧を取得する
-@app.get("/questions", response_model=list[QuestionSchema])
+@app.get(
+    "/questions",
+    response_model=list[QuestionSchema],
+)
 def get_questions(db: Session = Depends(get_db)):
-    return read_questions(db)
+    questions = read_questions(db)
+    return [QuestionSchema.model_validate(q) for q in questions]
 
 
 # 2.質問の詳細を取得する
@@ -54,7 +57,8 @@ def get_questions(db: Session = Depends(get_db)):
     "/questions/{question_id}",
 )
 def get_questions_details(question_id: int, db: Session = Depends(get_db)):
-    return read_questions_details(db, question_id)
+    question = read_questions_details(db, question_id)
+    return QuestionSchema.model_validate(question)
 
 
 # 3.自分の質問を取得する
@@ -62,7 +66,8 @@ def get_questions_details(question_id: int, db: Session = Depends(get_db)):
     "/users/{user_id}/questions",
 )
 def get_my_questions(user_id: str, db: Session = Depends(get_db)):
-    return read_my_questions(db, user_id)
+    questions = read_my_questions(db, user_id)
+    return [QuestionSchema.model_validate(q) for q in questions]
 
 
 # 4.新しい質問を作成する
@@ -76,18 +81,17 @@ def post_question(question: QuestionCreate, db: Session = Depends(get_db)):
         is_anonymous=question.is_anonymous,
         content=question.content,
     )
-    return create_question(db, question)
+    question = create_question(db, question)
+    return QuestionSchema.model_validate(question)
 
 
 # 5.質問を削除する
 @app.delete("/questions/{user_id}/{question_id}")
-def delete_question_endpoint(
-    user_id: str, question_id: str, db: Session = Depends(get_db)
-):
+def delete_question_endpoint(user_id: str, question_id: str, db: Session = Depends(get_db)):
     question = delete_question(db, user_id, question_id)
     if not question:
         raise HTTPException(status_code=404, detail="Question not found")
-    return question
+    return QuestionSchema.model_validate(question)
 
 
 # 6.質問を編集（更新）する
@@ -101,7 +105,7 @@ def update_question_endpoint(
     question = update_question(db, user_id, question_id, new_data)
     if not question:
         raise HTTPException(status_code=404, detail="Question not found")
-    return question
+    return QuestionSchema.model_validate(question)
 
 
 # ユーザ
@@ -110,7 +114,7 @@ def update_question_endpoint(
     "/users/{user_id}/users",
 )
 def get_users(user_id: str, db: Session = Depends(get_db)):
-    return read_questions(db)
+    return read_questions(db)  # FIXME: これヤバくね？
 
 
 # 2.ユーザを作成する
@@ -123,4 +127,4 @@ def post_user(user: UserCreate, db: Session = Depends(get_db)):
         display_name=user.display_name,
         bio=user.bio,
     )
-    return create_question(db, user)
+    return create_question(db, user)  # FIXME: これヤバくね？
