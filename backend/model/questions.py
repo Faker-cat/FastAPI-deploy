@@ -1,16 +1,17 @@
 from datetime import datetime, timedelta
 
+from pydantic import BaseModel
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
+
 from backend.model.answers import Answer  # noqa
 from backend.model.base import Base
 from backend.model.bookmarks import Bookmark  # noqa
 from backend.model.likes import Like  # noqa
 from backend.model.notifications import Notification  # noqa
-from backend.model.tags import Tag  # noqa
+from backend.model.tags import Tag, TagSchema  # noqa
 from backend.model.users import User  # noqa
-from pydantic import BaseModel
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
 
 
 class Question(Base):
@@ -18,14 +19,10 @@ class Question(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String(255), nullable=False)  # 質問のタイトル
-    user_id = Column(
-        UUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
-    )  # 投稿者
+    user_id = Column(UUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)  # 投稿者
     is_anonymous = Column(Boolean, default=True)  # 匿名フラグ
     content = Column(Text, nullable=False)  # 質問の本文
-    created_at = Column(
-        DateTime, default=lambda: datetime.utcnow() + timedelta(hours=9)
-    )  # 作成日時
+    created_at = Column(DateTime, default=lambda: datetime.utcnow() + timedelta(hours=9))  # 作成日時
 
     # リレーションシップ
     user = relationship("User", backref="question")
@@ -41,7 +38,7 @@ class QuestionSchema(BaseModel):
     user_id: str
     is_anonymous: bool
     content: str
-    tags: list[Tag] = []
+    tags: list[TagSchema] = []
 
     class Config:
         arbitrary_types_allowed = True
