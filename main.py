@@ -14,6 +14,7 @@ from backend.model.users import User
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Session
 
 app = FastAPI()
@@ -116,7 +117,7 @@ def get_my_questions(user_id: str, db: Session = Depends(get_db)):
 def post_question(question: QuestionCreate, db: Session = Depends(get_db)):
     question = Question(
         title=question.title,
-        user_id=question.user_id,
+        user_id=UUID(question.user_id),  # ここで UUID 型に変換
         is_anonymous=question.is_anonymous,
         content=question.content,
     )
