@@ -1,10 +1,5 @@
 from typing import Any, Dict
 
-from fastapi import Depends, FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
-
 from backend.database.questions_database import (
     create_question,
     delete_question,
@@ -16,6 +11,10 @@ from backend.database.questions_database import (
 from backend.middleware.database import get_db
 from backend.model.questions import Question, QuestionSchema
 from backend.model.users import User
+from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 app = FastAPI()
 
@@ -49,7 +48,17 @@ class UserCreate(BaseModel):
 )
 def get_questions(db: Session = Depends(get_db)):
     questions = read_questions(db)
-    return [QuestionSchema.model_validate(q) for q in questions]
+    return [
+        QuestionSchema(
+            id=q.id,
+            title=q.title,
+            user_id=str(q.user_id),  # UUIDを文字列に変換
+            is_anonymous=q.is_anonymous,
+            content=q.content,
+            tags=q.tags,
+        )
+        for q in questions
+    ]
 
 
 # 2.質問の詳細を取得する
@@ -87,7 +96,9 @@ def post_question(question: QuestionCreate, db: Session = Depends(get_db)):
 
 # 5.質問を削除する
 @app.delete("/questions/{user_id}/{question_id}")
-def delete_question_endpoint(user_id: str, question_id: str, db: Session = Depends(get_db)):
+def delete_question_endpoint(
+    user_id: str, question_id: str, db: Session = Depends(get_db)
+):
     question = delete_question(db, user_id, question_id)
     if not question:
         raise HTTPException(status_code=404, detail="Question not found")
