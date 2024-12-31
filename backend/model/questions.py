@@ -47,7 +47,6 @@ class QuestionSchema(BaseModel):
     class Config:
         arbitrary_types_allowed = True
         orm_mode = True
-        from_attributes = True  # from_ormのサポートを有効にする
 
     # def __init__(
     #     self,

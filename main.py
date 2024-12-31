@@ -89,7 +89,24 @@ def get_questions_details(question_id: int, db: Session = Depends(get_db)):
 )
 def get_my_questions(user_id: str, db: Session = Depends(get_db)):
     questions = read_my_questions(db, user_id)
-    return [QuestionSchema.model_validate(q) for q in questions]
+
+    # もし対象の質問が存在しない場合、エラーを返す
+    if not questions:
+        raise HTTPException(status_code=404, detail="Question not found")
+
+    # user_id を文字列に変換
+    return [
+        QuestionSchema(
+            id=q.id,
+            title=q.title,
+            user_id=str(q.user_id),  # UUIDを文字列に変換
+            is_anonymous=q.is_anonymous,
+            content=q.content,
+            tags=q.tags,
+        )
+        for q in questions
+    ]
+    # return [QuestionSchema.model_validate(q) for q in questions]
 
 
 # 4.新しい質問を作成する
