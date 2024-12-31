@@ -48,14 +48,14 @@ def update_question(db: Session, user_id: str, question_id: str, new_data: dict)
     return question
 
 
-# 5. 質問を取得する（get）
-def read_questions_details(db: Session, question_id: str):
+# 5. 質問の詳細を取得する（get）
+def read_questions_details(db: Session, question_id: int):
     # Question.IDに基づいて質問を取得
-    questions = db.query(Question).filter(Question.id == question_id).first()
-    return questions
+    question = db.query(Question).filter(Question.id == question_id).first()
+    return question
 
 
-# 6. 質問を取得する（get）
+# 6. 自分の質問を取得する（get）
 def read_my_questions(db: Session, user_id: str):
     # ユーザーIDに基づいて質問を取得（質問を新しい順に取得）
     questions = (
