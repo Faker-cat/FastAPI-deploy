@@ -19,7 +19,7 @@ class Question(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String(255), nullable=False)  # 質問のタイトル
     user_id = Column(
-        UUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )  # 投稿者
     is_anonymous = Column(Boolean, default=True)  # 匿名フラグ
     content = Column(Text, nullable=False)  # 質問の本文
