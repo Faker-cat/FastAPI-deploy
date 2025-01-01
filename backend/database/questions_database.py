@@ -1,5 +1,12 @@
 from backend.model.questions import Question
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
+
+
+class QuestionUpdate(BaseModel):
+    title: str
+    is_anonymous: bool
+    content: str
 
 
 # 1. 質問を取得する（get）
@@ -33,19 +40,24 @@ def delete_question(db: Session, user_id: str, question_id: int):
 
 
 # 4. 質問を編集する（更新）
-def update_question(db: Session, user_id: str, question_id: str, new_data: dict):
+def update_question(
+    db: Session, user_id: str, question_id: int, question: QuestionUpdate
+):
     # 指定されたユーザーIDと質問IDに基づいて質問を更新
-    question = (
+    put_question = (
         db.query(Question)
         .filter(Question.user_id == user_id, Question.id == question_id)
         .first()
     )
-    if question:
-        for key, value in new_data.items():
-            setattr(question, key, value)  # new_dataのキーと値で属性を更新
-        db.commit()
-        db.refresh(question)  # 更新された質問を返す
-    return question
+    if not put_question:
+        None
+
+    put_question.title = question.title
+    put_question.is_anonymous = question.is_anonymous
+    put_question.content = question.content
+    db.commit()
+    db.refresh(put_question)  # 更新された質問を返す
+    return put_question
 
 
 # 5. 質問の詳細を取得する（get）

@@ -1,5 +1,3 @@
-from typing import Any, Dict
-
 from backend.database.questions_database import (
     create_question,
     delete_question,
@@ -31,6 +29,12 @@ app.add_middleware(
 class QuestionCreate(BaseModel):
     title: str
     user_id: str
+    is_anonymous: bool
+    content: str
+
+
+class QuestionUpdate(BaseModel):
+    title: str
     is_anonymous: bool
     content: str
 
@@ -140,14 +144,21 @@ def delete_question_endpoint(
 @app.put("/questions/{user_id}/{question_id}")
 def update_question_endpoint(
     user_id: str,
-    question_id: str,
-    new_data: Dict[str, Any],
+    question_id: int,
+    question: QuestionUpdate,
     db: Session = Depends(get_db),
 ):
-    question = update_question(db, user_id, question_id, new_data)
-    if not question:
+    put_question = update_question(db, user_id, question_id, question)
+    if not put_question:
         raise HTTPException(status_code=404, detail="Question not found")
-    return QuestionSchema.model_validate(question)
+    return QuestionSchema(
+        id=put_question.id,
+        title=put_question.title,
+        user_id=str(put_question.user_id),
+        is_anonymous=put_question.is_anonymous,
+        content=put_question.content,
+        created_at=put_question.created_at,
+    )
 
 
 # ユーザ
