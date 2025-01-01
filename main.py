@@ -6,9 +6,10 @@ from backend.database.questions_database import (
     read_questions_details,
     update_question,
 )
+from backend.database.users_database import read_user
 from backend.middleware.database import get_db
 from backend.model.questions import QuestionSchema
-from backend.model.users import User
+from backend.model.users import User, UserSchema
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -162,7 +163,13 @@ def update_question_endpoint(
     "/users/{user_id}/users",
 )
 def get_users(user_id: str, db: Session = Depends(get_db)):
-    return read_questions(db)  # FIXME: これヤバくね？
+    user = read_user(db, user_id)
+
+    # もし対象の質問が存在しない場合、エラーを返す
+    if not user:
+        raise HTTPException(status_code=404, detail="Question not found")
+
+    return UserSchema(id=str(user.id), display_name=user.display_name, bio=user.bio)
 
 
 # 2.ユーザを作成する
