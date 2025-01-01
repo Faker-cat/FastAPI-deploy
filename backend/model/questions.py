@@ -42,6 +42,7 @@ class QuestionSchema(BaseModel):
     user_id: str
     is_anonymous: bool
     content: str
+    created_at: datetime
     tags: list[TagSchema] = []
 
     class Config:
