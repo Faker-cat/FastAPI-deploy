@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from backend.model.base import Base
 from pydantic import BaseModel
@@ -14,7 +14,9 @@ class User(Base):
     id = Column(UUID, primary_key=True, default=uuid.uuid4)
     display_name = Column(String(50), unique=True, nullable=False)
     bio = Column(Text)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(
+        DateTime, default=lambda: datetime.utcnow() + timedelta(hours=9)
+    )
 
     # 質問とのリレーション
     # questions = relationship("Question", back_populates="user")

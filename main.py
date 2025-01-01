@@ -6,10 +6,16 @@ from backend.database.questions_database import (
     read_questions_details,
     update_question,
 )
-from backend.database.users_database import read_user
+from backend.database.users_database import (
+    create_user,
+    delete_user,
+    read_my_user,
+    read_users,
+    update_user,
+)
 from backend.middleware.database import get_db
 from backend.model.questions import QuestionSchema
-from backend.model.users import User, UserSchema
+from backend.model.users import UserSchema
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -41,6 +47,11 @@ class QuestionUpdate(BaseModel):
 
 class UserCreate(BaseModel):
     id: str
+    display_name: str
+    bio: str
+
+
+class UserUpdate(BaseModel):
     display_name: str
     bio: str
 
@@ -147,27 +158,40 @@ def update_question_endpoint(
     put_question = update_question(db, user_id, question_id, question)
     if not put_question:
         raise HTTPException(status_code=404, detail="Question not found")
-    return QuestionSchema(
-        id=put_question.id,
-        title=put_question.title,
-        user_id=str(put_question.user_id),
-        is_anonymous=put_question.is_anonymous,
-        content=put_question.content,
-        created_at=put_question.created_at,
-    )
+    # return QuestionSchema(
+    #     id=put_question.id,
+    #     title=put_question.title,
+    #     user_id=str(put_question.user_id),
+    #     is_anonymous=put_question.is_anonymous,
+    #     content=put_question.content,
+    #     created_at=put_question.created_at,
+    # )
+    return put_question
 
 
 # ユーザ
-# 1.自分のユーザ情報を取得する
+# 1.ユーザ一覧を取得する(編集用)
 @app.get(
-    "/users/{user_id}/users",
+    "/users",
+    response_model=list[UserSchema],
 )
-def get_users(user_id: str, db: Session = Depends(get_db)):
-    user = read_user(db, user_id)
+def get_users(db: Session = Depends(get_db)):
+    users = read_users(db)
+    return [
+        UserSchema(id=str(q.id), display_name=q.display_name, bio=q.bio) for q in users
+    ]
+
+
+# 2.自分のユーザ情報を取得する
+@app.get(
+    "/users/{id}/users",
+)
+def get_my_user(user_id: str, db: Session = Depends(get_db)):
+    user = read_my_user(db, user_id)
 
     # もし対象の質問が存在しない場合、エラーを返す
     if not user:
-        raise HTTPException(status_code=404, detail="Question not found")
+        raise HTTPException(status_code=404, detail="User not found")
 
     return UserSchema(id=str(user.id), display_name=user.display_name, bio=user.bio)
 
@@ -177,9 +201,24 @@ def get_users(user_id: str, db: Session = Depends(get_db)):
     "/users/",
 )
 def post_user(user: UserCreate, db: Session = Depends(get_db)):
-    user = User(
-        id=user.id,
-        display_name=user.display_name,
-        bio=user.bio,
-    )
-    return create_question(db, user)  # FIXME: これヤバくね？
+    post_user = create_user(db, user.id, user.display_name, user.bio)
+    return post_user
+
+
+# 4.ユーザを削除する
+@app.delete("/users/{id}/")
+def delete_user_endpoint(id: str, db: Session = Depends(get_db)):
+    delete_user(db, id)
+
+
+# 5.ユーザを編集（更新）する
+@app.put("/users/{id}/")
+def update_user_endpoint(
+    id: str,
+    user: UserUpdate,
+    db: Session = Depends(get_db),
+):
+    put_user = update_user(db, id, user)
+    if not put_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return put_user
