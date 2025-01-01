@@ -53,11 +53,10 @@ def get_questions(db: Session = Depends(get_db)):
         QuestionSchema(
             id=q.id,
             title=q.title,
-            user_id=str(q.user_id),  # UUIDを文字列に変換
+            user_id=str(q.user_id),
             is_anonymous=q.is_anonymous,
             content=q.content,
             created_at=q.created_at,
-            tags=q.tags,
         )
         for q in questions
     ]
@@ -81,7 +80,6 @@ def get_questions_details(question_id: int, db: Session = Depends(get_db)):
         is_anonymous=question.is_anonymous,
         content=question.content,
         created_at=question.created_at,
-        tags=question.tags,
     )
     # return QuestionSchema.model_validate(question)
 
@@ -106,7 +104,6 @@ def get_my_questions(user_id: str, db: Session = Depends(get_db)):
             is_anonymous=q.is_anonymous,
             content=q.content,
             created_at=q.created_at,
-            tags=q.tags,
         )
         for q in questions
     ]
