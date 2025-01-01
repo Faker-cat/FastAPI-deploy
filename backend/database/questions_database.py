@@ -2,6 +2,12 @@ from backend.model.questions import Question
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+# class QuestionCreate(BaseModel):
+#     title: str
+#     user_id: str
+#     is_anonymous: bool
+#     content: str
+
 
 class QuestionUpdate(BaseModel):
     title: str
@@ -17,7 +23,10 @@ def read_questions(db: Session):
 
 
 # 2. 新しい質問を作成する（post）
-def create_question(db: Session, question: Question):
+def create_question(db: Session, title, user_id, is_anonymous, content):
+    question = Question(
+        title=title, user_id=user_id, is_anonymous=is_anonymous, content=content
+    )
     # 新しい質問をデータベースに追加
     db.add(question)
     db.commit()
