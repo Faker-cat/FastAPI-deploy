@@ -56,6 +56,7 @@ def get_questions(db: Session = Depends(get_db)):
             user_id=str(q.user_id),  # UUIDを文字列に変換
             is_anonymous=q.is_anonymous,
             content=q.content,
+            created_at=q.created_at,
             tags=q.tags,
         )
         for q in questions
@@ -79,6 +80,7 @@ def get_questions_details(question_id: int, db: Session = Depends(get_db)):
         user_id=str(question.user_id),
         is_anonymous=question.is_anonymous,
         content=question.content,
+        created_at=question.created_at,
         tags=question.tags,
     )
     # return QuestionSchema.model_validate(question)
@@ -103,6 +105,7 @@ def get_my_questions(user_id: str, db: Session = Depends(get_db)):
             user_id=str(q.user_id),  # UUIDを文字列に変換
             is_anonymous=q.is_anonymous,
             content=q.content,
+            created_at=q.created_at,
             tags=q.tags,
         )
         for q in questions
@@ -112,12 +115,12 @@ def get_my_questions(user_id: str, db: Session = Depends(get_db)):
 
 # 4.新しい質問を作成する
 @app.post(
-    "/questions/",
+    "/questions",
 )
 def post_question(question: QuestionCreate, db: Session = Depends(get_db)):
     question = Question(
         title=question.title,
-        user_id=UUID(question.user_id),  # ここで UUID 型に変換
+        user_id=UUID(question.user_id),
         is_anonymous=question.is_anonymous,
         content=question.content,
     )
