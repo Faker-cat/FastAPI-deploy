@@ -131,12 +131,12 @@ def post_question(question: QuestionCreate, db: Session = Depends(get_db)):
 # 5.質問を削除する
 @app.delete("/questions/{user_id}/{question_id}")
 def delete_question_endpoint(
-    user_id: str, question_id: str, db: Session = Depends(get_db)
+    user_id: str, question_id: int, db: Session = Depends(get_db)
 ):
-    question = delete_question(db, user_id, question_id)
-    if not question:
-        raise HTTPException(status_code=404, detail="Question not found")
-    return QuestionSchema.model_validate(question)
+    delete_question(db, user_id, question_id)
+    # if not question:
+    #     raise HTTPException(status_code=404, detail="Question not found")
+    # # return QuestionSchema.model_validate(question)
 
 
 # 6.質問を編集（更新）する

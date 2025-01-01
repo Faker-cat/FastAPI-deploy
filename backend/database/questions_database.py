@@ -19,7 +19,7 @@ def create_question(db: Session, question: Question):
 
 
 # 3. 質問を削除する（delete）
-def delete_question(db: Session, user_id: str, question_id: str):
+def delete_question(db: Session, user_id: str, question_id: int):
     # 指定されたユーザーIDと質問IDに基づいて質問を削除
     question = (
         db.query(Question)
