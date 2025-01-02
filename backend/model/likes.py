@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from backend.model.base import Base
 from sqlalchemy import Column, DateTime, ForeignKey, Integer
@@ -19,7 +19,7 @@ class Like(Base):
         Integer, ForeignKey("answers.id", ondelete="CASCADE")
     )  # 回答へのいいね
     created_at = Column(
-        DateTime, default=datetime.utcnow
+        DateTime, default=lambda: datetime.utcnow() + timedelta(hours=9)
     )  # いいねの作成日時（デフォルトで現在時刻）
 
     # リレーション：User、Question、Answer モデルとの関連を設定

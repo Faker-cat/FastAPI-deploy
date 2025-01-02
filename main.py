@@ -6,6 +6,12 @@ from backend.database.answers_database import (
     read_question_answers,
     update_answer,
 )
+from backend.database.likes_database import (
+    create_like,
+    delete_like,
+    read_likes_count,
+    read_my_likes,
+)
 from backend.database.questions_database import (
     create_question,
     delete_question,
@@ -191,7 +197,6 @@ def update_question_endpoint(
 
 
 # 回答
-# 質問
 # 1.回答一覧を取得する(仮)
 @app.get(
     "/answers",
@@ -350,3 +355,57 @@ def update_user_endpoint(
     if not put_user:
         raise HTTPException(status_code=404, detail="User not found")
     return put_user
+
+
+# いいね
+# 1. いいねの総数を取得する（質問または回答に対して）
+@app.get("/likes/count")
+def get_likes_count(
+    question_id: int = None, answer_id: int = None, db: Session = Depends(get_db)
+):
+    if not question_id and not answer_id:
+        raise HTTPException(
+            status_code=400, detail="Question ID or Answer ID must be provided"
+        )
+    likes_count = read_likes_count(db, question_id, answer_id)
+    return {"total_likes": likes_count}
+
+
+# 2. ユーザーがいいねした質問・回答を取得する
+@app.get("/users/{user_id}/likes")
+def get_user_likes(user_id: str, db: Session = Depends(get_db)):
+    likes = read_my_likes(db, user_id)
+    if not likes:
+        raise HTTPException(status_code=404, detail="No likes found for this user")
+    return [
+        {"id": like.id, "question_id": like.question_id, "answer_id": like.answer_id}
+        for like in likes
+    ]
+
+
+# 3. いいねを追加する
+@app.post("/likes")
+def add_like(
+    user_id: str,
+    question_id: int = None,
+    answer_id: int = None,
+    db: Session = Depends(get_db),
+):
+    if not question_id and not answer_id:
+        raise HTTPException(
+            status_code=400, detail="Question ID or Answer ID must be provided"
+        )
+
+    new_like = create_like(db, user_id, question_id, answer_id)
+    return {"message": "Like added successfully", "like": new_like}
+
+
+# 4. いいねを削除する
+@app.delete("/likes")
+def remove_like(
+    user_id: str,
+    question_id: int = None,
+    answer_id: int = None,
+    db: Session = Depends(get_db),
+):
+    delete_like(db, user_id, question_id, answer_id)
