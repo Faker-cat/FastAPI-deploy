@@ -6,6 +6,12 @@ from backend.database.answers_database import (
     read_question_answers,
     update_answer,
 )
+from backend.database.bookmarks_database import (
+    create_bookmark,
+    delete_bookmark,
+    read_bookmarks_count,
+    read_my_bookmarks,
+)
 from backend.database.likes_database import (
     create_like,
     delete_like,
@@ -409,3 +415,49 @@ def remove_like(
     db: Session = Depends(get_db),
 ):
     delete_like(db, user_id, question_id, answer_id)
+
+
+# ブックマーク
+# 1. ブックマークの総数を取得する（質問または回答に対して）
+@app.get("/bookmarks/count")
+def get_bookmarks_count(question_id: int, db: Session = Depends(get_db)):
+    if not question_id:
+        raise HTTPException(status_code=400, detail="Question ID must be provided")
+    bookmarks_count = read_bookmarks_count(db, question_id)
+    return {"total_bookmarks": bookmarks_count}
+
+
+# 2. ユーザーがブックマークした質問を取得する
+@app.get("/users/{user_id}/bookmarks")
+def get_user_bookmarks(user_id: str, db: Session = Depends(get_db)):
+    bookmarks = read_my_bookmarks(db, user_id)
+    if not bookmarks:
+        raise HTTPException(status_code=404, detail="No bookmarks found for this user")
+    return [
+        {"id": bookmark.id, "question_id": bookmark.question_id}
+        for bookmark in bookmarks
+    ]
+
+
+# 3. ブックマークを追加する
+@app.post("/bookmarks")
+def add_bookmark(
+    user_id: str,
+    question_id: int = None,
+    db: Session = Depends(get_db),
+):
+    if not question_id:
+        raise HTTPException(status_code=400, detail="Question ID must be provided")
+
+    new_bookmark = create_bookmark(db, user_id, question_id)
+    return {"message": "Bookmark added successfully", "bookmark": new_bookmark}
+
+
+# 4. ブックマークを削除する
+@app.delete("/bookmarks")
+def remove_bookmark(
+    user_id: str,
+    question_id: int = None,
+    db: Session = Depends(get_db),
+):
+    delete_bookmark(db, user_id, question_id)

@@ -2,29 +2,43 @@ from backend.model.bookmarks import Bookmark
 from sqlalchemy.orm import Session
 
 
-# 1. ブックマークを取得する（get）
-def get_bookmarks(db: Session, user_id: str, question_id: int):
-    # ユーザーがしたブックマークを取得
-    return (
+# 1. ブックマークの総数を取得する（get）
+def read_bookmarks_count(db: Session, question_id: int) -> int:
+    # Question.IDに基づいて質問を取得
+    query = db.query(Bookmark).filter(Bookmark.question_id == question_id)
+
+    # 結果をカウントして返す
+    return query.count()
+
+
+# 2.自分がブックマークした質問を取得する（get）
+def read_my_bookmarks(db: Session, user_id: str):
+    bookmarks = db.query(Bookmark).filter(Bookmark.user_id == user_id).all()
+    return bookmarks
+
+
+# 3. ブックマークを作成する（post）
+def create_bookmark(db: Session, user_id: str, question_id: int):
+    # 同じ質問または回答に対する重複ブックマークを防ぐ
+    existing_bookmark = (
         db.query(Bookmark)
         .filter(Bookmark.user_id == user_id, Bookmark.question_id == question_id)
-        .all()
+        .first()
     )
+    # すでにブックマークが存在する場合、それを返す
+    if existing_bookmark:
+        return existing_bookmark
 
-
-# 2. ブックマークを作成する（post）
-def create_bookmark(db: Session, user_id: str, question_id: int):
-    # 新規にブックマークを作成
-    bookmark = Bookmark(user_id=user_id, question_id=question_id)
-    db.add(bookmark)
+    new_bookmark = Bookmark(user_id=user_id, question_id=question_id)
+    db.add(new_bookmark)
     db.commit()
-    db.refresh(bookmark)
-    return bookmark
+    db.refresh(new_bookmark)
+
+    return new_bookmark
 
 
-# 3. ブックマークを削除する（delete）
+# 4. ブックマークを削除する（delete）
 def delete_bookmark(db: Session, user_id: str, question_id: int):
-    # 指定されたユーザーIDと質問IDに基づいてブックマークを削除
     bookmark = (
         db.query(Bookmark)
         .filter(Bookmark.user_id == user_id, Bookmark.question_id == question_id)
@@ -34,5 +48,3 @@ def delete_bookmark(db: Session, user_id: str, question_id: int):
     if bookmark:
         db.delete(bookmark)
         db.commit()
-
-    return bookmark
