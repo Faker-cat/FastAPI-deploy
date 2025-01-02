@@ -15,7 +15,7 @@ class QuestionUpdate(BaseModel):
     content: str
 
 
-# 1. 質問を取得する（get）
+# 1. 質問一覧を取得する（get）
 def read_questions(db: Session):
     # 質問を新しい順に取得
     questions = db.query(Question).order_by(Question.created_at.desc()).all()
@@ -45,7 +45,6 @@ def delete_question(db: Session, user_id: str, question_id: int):
     if question:
         db.delete(question)
         db.commit()
-    return question
 
 
 # 4. 質問を編集する（更新）

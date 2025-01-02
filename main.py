@@ -1,3 +1,11 @@
+from backend.database.answers_database import (
+    create_answer,
+    delete_answer,
+    read_answers,
+    read_my_answers,
+    read_question_answers,
+    update_answer,
+)
 from backend.database.questions_database import (
     create_question,
     delete_question,
@@ -14,6 +22,7 @@ from backend.database.users_database import (
     update_user,
 )
 from backend.middleware.database import get_db
+from backend.model.answers import AnswerSchema
 from backend.model.questions import QuestionSchema
 from backend.model.users import UserSchema
 from fastapi import Depends, FastAPI, HTTPException
@@ -41,6 +50,17 @@ class QuestionCreate(BaseModel):
 
 class QuestionUpdate(BaseModel):
     title: str
+    is_anonymous: bool
+    content: str
+
+
+class AnswerCreate(BaseModel):
+    user_id: str
+    is_anonymous: bool
+    content: str
+
+
+class AnswerUpdate(BaseModel):
     is_anonymous: bool
     content: str
 
@@ -88,14 +108,15 @@ def get_questions_details(question_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Question not found")
 
     # user_id を文字列に変換
-    return QuestionSchema(
-        id=question.id,
-        title=question.title,
-        user_id=str(question.user_id),
-        is_anonymous=question.is_anonymous,
-        content=question.content,
-        created_at=question.created_at,
-    )
+    # return QuestionSchema(
+    #     id=question.id,
+    #     title=question.title,
+    #     user_id=str(question.user_id),
+    #     is_anonymous=question.is_anonymous,
+    #     content=question.content,
+    #     created_at=question.created_at,
+    # )
+    return question
     # return QuestionSchema.model_validate(question)
 
 
@@ -167,6 +188,113 @@ def update_question_endpoint(
     #     created_at=put_question.created_at,
     # )
     return put_question
+
+
+# 回答
+# 質問
+# 1.回答一覧を取得する(仮)
+@app.get(
+    "/answers",
+    response_model=list[AnswerSchema],
+)
+def get_answers(db: Session = Depends(get_db)):
+    answers = read_answers(db)
+    return [
+        AnswerSchema(
+            id=q.id,
+            question_id=q.question_id,
+            user_id=str(q.user_id),
+            is_anonymous=q.is_anonymous,
+            content=q.content,
+            created_at=q.created_at,
+        )
+        for q in answers
+    ]
+
+
+# 2.特定の質問に対する回答を取得する
+@app.get(
+    "/answers/{question_id}",
+)
+def get_question_answers(question_id: int, db: Session = Depends(get_db)):
+    answers = read_question_answers(db, question_id)
+    # もし対象の質問が存在しない場合、エラーを返す
+    if not answers:
+        raise HTTPException(status_code=404, detail="Answers not found")
+
+    # user_id を文字列に変換
+    # AnswerSchema(
+    #     id=answers.id,
+    #     question_id=answers.question_id,
+    #     user_id=str(answers.user_id),
+    #     is_anonymous=answers.is_anonymous,
+    #     content=answers.content,
+    #     created_at=answers.created_at,
+    # )
+    return answers
+    # return QuestionSchema.model_validate(question)
+
+
+# 3.自分の回答を取得する
+@app.get(
+    "/answers/{user_id}/answers",
+)
+def get_my_answers(user_id: str, db: Session = Depends(get_db)):
+    answers = read_my_answers(db, user_id)
+
+    # もし対象の質問が存在しない場合、エラーを返す
+    if not answers:
+        raise HTTPException(status_code=404, detail="Answers not found")
+
+    # user_id を文字列に変換
+    # return [
+    #     AnswerSchema(
+    #         id=q.id,
+    #         question_id=q.question_id,
+    #         user_id=str(q.user_id),  # UUIDを文字列に変換
+    #         is_anonymous=q.is_anonymous,
+    #         content=q.content,
+    #         created_at=q.created_at,
+    #     )
+    #     for q in answers
+    # ]
+    return answers
+    # return [QuestionSchema.model_validate(q) for q in questions]
+
+
+# 4.新しい回答を作成する
+@app.post(
+    "/answers",
+)
+def post_answer(question_id: int, answer: AnswerCreate, db: Session = Depends(get_db)):
+    post_answer = create_answer(
+        db, question_id, answer.user_id, answer.is_anonymous, answer.content
+    )
+    return post_answer
+
+
+# 5.回答を削除する
+@app.delete("/answers/{user_id}/{answer_id}")
+def delete_answer_endpoint(user_id: str, answer_id: int, db: Session = Depends(get_db)):
+    delete_answer(db, user_id, answer_id)
+    # if not question:
+    #     raise HTTPException(status_code=404, detail="Question not found")
+    # # return QuestionSchema.model_validate(question)
+
+
+# 6.回答を編集（更新）する
+@app.put("/answers/{user_id}/{answer_id}")
+def update_answer_endpoint(
+    user_id: str,
+    answer_id: int,
+    answer: AnswerUpdate,
+    db: Session = Depends(get_db),
+):
+    put_answer = update_answer(db, user_id, answer_id, answer)
+    if not put_answer:
+        raise HTTPException(status_code=404, detail="Answer not found")
+
+    return put_answer
 
 
 # ユーザ

@@ -1,26 +1,58 @@
 from backend.model.answers import Answer
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 
-# 1. 回答を取得する（get）
-def read_answer(db: Session, answer_id: int):
-    # 回答IDに基づいて回答情報を取得
-    answer = db.query(Answer).filter(Answer.id == answer_id).first()
-    return answer
+class AnswerUpdate(BaseModel):
+    is_anonymous: bool
+    content: str
 
 
-# 2. 新しい回答を作成する（post）
-def create_answer(db: Session, answer_data: dict):
-    # 新しい回答を作成し、データベースに追加
-    answer = Answer(**answer_data)  # answer_dataの情報を使ってAnswerインスタンスを作成
+# 1. 回答一覧を取得する（get）
+def read_answers(db: Session):
+    # 回答を新しい順に取得
+    answers = db.query(Answer).order_by(Answer.created_at.desc()).all()
+    return answers
+
+
+# 2. 特定の質問に対する回答を取得する（get）
+def read_question_answers(db: Session, question_id: int):
+    # Question.IDに基づいて回答を取得
+    answers = db.query(Answer).filter(Answer.question_id == question_id).first()
+    return answers
+
+
+# 3. 自分の回答を取得する（get）
+def read_my_answers(db: Session, user_id: str):
+    # ユーザーIDに基づいて回答を取得（回答を新しい順に取得）
+    answers = (
+        db.query(Answer)
+        .filter(Answer.user_id == user_id)
+        .order_by(Answer.created_at.desc())
+        .all()
+    )
+    return answers
+
+
+# 4. 新しい回答を作成する（post）
+def create_answer(
+    db: Session, question_id: int, user_id: str, is_anonymous: bool, content: str
+):
+    answer = Answer(
+        question_id=question_id,
+        user_id=user_id,
+        is_anonymous=is_anonymous,
+        content=content,
+    )
+    # 新しい質問をデータベースに追加
     db.add(answer)
     db.commit()
-    db.refresh(answer)  # 作成された回答を返す
+    db.refresh(answer)  # 作成された質問を返す
     return answer
 
 
-# 3. 回答を削除する（delete）
-def delete_answer(db: Session, answer_id: int, user_id: str):
+# 5. 回答を削除する（delete）
+def delete_answer(db: Session, user_id: str, answer_id: int):
     # 指定された回答IDとユーザーIDに基づいて回答を削除
     answer = (
         db.query(Answer)
@@ -30,20 +62,21 @@ def delete_answer(db: Session, answer_id: int, user_id: str):
     if answer:
         db.delete(answer)
         db.commit()
-    return answer
 
 
-# 4. 回答を編集する（更新）
-def update_answer(db: Session, answer_id: int, user_id: str, new_data: dict):
+# 6. 回答を編集する（更新）
+def update_answer(db: Session, user_id: str, answer_id: int, answer: AnswerUpdate):
     # 指定された回答IDとユーザーIDに基づいて回答を更新
-    answer = (
+    put_answer = (
         db.query(Answer)
         .filter(Answer.id == answer_id, Answer.user_id == user_id)
         .first()
     )
-    if answer:
-        for key, value in new_data.items():
-            setattr(answer, key, value)  # new_dataのキーと値で属性を更新
-        db.commit()
-        db.refresh(answer)  # 更新された回答を返す
-    return answer
+    if not put_answer:
+        None
+
+    put_answer.is_anonymous = answer.is_anonymous
+    put_answer.content = answer.content
+    db.commit()
+    db.refresh(put_answer)
+    return put_answer
