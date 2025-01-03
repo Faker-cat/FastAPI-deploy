@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import List
 
 from backend.model.answers import Answer  # noqa
 from backend.model.base import Base
@@ -6,9 +7,17 @@ from backend.model.bookmarks import Bookmark  # noqa
 from backend.model.likes import Like  # noqa
 from backend.model.notifications import Notification  # noqa
 from backend.model.tags import Tag, TagSchema  # noqa
-from backend.model.users import User  # noqa
+from backend.model.users import UserSchema
 from pydantic import BaseModel
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -39,24 +48,12 @@ class Question(Base):
 class QuestionSchema(BaseModel):
     id: int
     title: str
-    user_id: str
+    user: UserSchema
     is_anonymous: bool
     content: str
     created_at: datetime
-    tags: list[TagSchema] = []
+    tags: List[TagSchema] = []
 
     class Config:
         arbitrary_types_allowed = True
-        orm_mode = True
-
-    # def __init__(
-    #     self,
-    #     title: str,
-    #     user_id: uuid.UUID,
-    #     body: str,
-    #     is_anonymous: bool = True,
-    # ):
-    #     self.title = title
-    #     self.user_id = user_id
-    #     self.body = body
-    #     self.is_anonymous = is_anonymous
+        from_attributes = True

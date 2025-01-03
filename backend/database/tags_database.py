@@ -1,4 +1,5 @@
-from backend.model.tags import Question, Tag
+from backend.model.questions import Question
+from backend.model.tags import Tag
 from sqlalchemy.orm import Session
 
 
@@ -11,6 +12,11 @@ def read_tag(db: Session, tag_id: int):
 
 # 2. 新しいタグを作成する（post）
 def create_tag(db: Session, tag_name: str):
+    # 既存のタグを確認
+    existing_tag = db.query(Tag).filter(Tag.name == tag_name).first()
+    if existing_tag:
+        return existing_tag  # 既存のタグを返す
+
     # 新しいタグを作成し、データベースに追加
     tag = Tag(name=tag_name)  # タグ名を使ってTagインスタンスを作成
     db.add(tag)

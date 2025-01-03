@@ -27,10 +27,10 @@ class User(Base):
 
 
 class UserSchema(BaseModel):
-    id: str
+    id: uuid.UUID
     display_name: str
     bio: str
 
     class Config:
         arbitrary_types_allowed = True
-        orm_mode = True
+        from_attributes = True

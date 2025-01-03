@@ -17,7 +17,6 @@ class TagSchema(BaseModel):
     id: int
     name: str
 
-    # 多対多のリレーション：質問との関連を定義
-    # questions = relationship(
-    #     "Question", secondary="question_tags", back_populates="tag"
-    # )
+    class Config:
+        arbitrary_types_allowed = True
+        from_attributes = True

@@ -26,6 +26,12 @@ from backend.database.questions_database import (
     read_questions_details,
     update_question,
 )
+from backend.database.tags_database import (
+    add_tag_to_question,
+    create_tag,
+    delete_tag,
+    read_tag,
+)
 from backend.database.users_database import (
     create_user,
     delete_user,
@@ -36,6 +42,7 @@ from backend.database.users_database import (
 from backend.middleware.database import get_db
 from backend.model.answers import AnswerSchema
 from backend.model.questions import QuestionSchema
+from backend.model.tags import TagSchema
 from backend.model.users import UserSchema
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -88,6 +95,10 @@ class UserUpdate(BaseModel):
     bio: str
 
 
+class TagCreate(BaseModel):
+    name: str
+
+
 # 質問
 # 1.質問一覧を取得する
 @app.get(
@@ -119,17 +130,10 @@ def get_questions_details(question_id: int, db: Session = Depends(get_db)):
     if not question:
         raise HTTPException(status_code=404, detail="Question not found")
 
-    # user_id を文字列に変換
-    # return QuestionSchema(
-    #     id=question.id,
-    #     title=question.title,
-    #     user_id=str(question.user_id),
-    #     is_anonymous=question.is_anonymous,
-    #     content=question.content,
-    #     created_at=question.created_at,
-    # )
-    return question
-    # return QuestionSchema.model_validate(question)
+    for tag in question.tags:
+        print(f"Tag ID: {tag.id}, Name: {tag.name}")
+
+    return QuestionSchema.model_validate(question)
 
 
 # 3.自分の質問を取得する
@@ -461,3 +465,43 @@ def remove_bookmark(
     db: Session = Depends(get_db),
 ):
     delete_bookmark(db, user_id, question_id)
+
+
+# --- タグ管理エンドポイント ---
+
+
+# タグ
+# 1. タグを取得する
+@app.get("/tags/{tag_id}", response_model=TagSchema)
+def get_tag(tag_id: int, db: Session = Depends(get_db)):
+    tag = read_tag(db, tag_id)
+    if not tag:
+        raise HTTPException(status_code=404, detail="Tag not found")
+    return TagSchema(id=tag.id, name=tag.name)
+
+
+# 2. 新しいタグを作成する
+@app.post("/tags", response_model=TagSchema)
+def create_new_tag(tag: TagCreate, db: Session = Depends(get_db)):
+    new_tag = create_tag(db, tag.name)
+    return TagSchema(id=new_tag.id, name=new_tag.name)
+
+
+# 3. タグを削除する
+@app.delete("/tags/{tag_id}")
+def delete_existing_tag(tag_id: int, db: Session = Depends(get_db)):
+    tag = delete_tag(db, tag_id)
+    if not tag:
+        raise HTTPException(status_code=404, detail="Tag not found")
+    return {"message": "Tag deleted successfully"}
+
+
+# --- 質問にタグを追加するエンドポイント ---
+@app.post("/questions/{question_id}/tags")
+def add_tags_to_question(
+    question_id: int, tag_ids: list[int], db: Session = Depends(get_db)
+):
+    question = add_tag_to_question(db, question_id, tag_ids)
+    if not question:
+        raise HTTPException(status_code=404, detail="Question not found")
+    return {"message": "Tags added to the question successfully", "tags": tag_ids}
