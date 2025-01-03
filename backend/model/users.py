@@ -12,7 +12,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(UUID, primary_key=True, default=uuid.uuid4)
-    display_name = Column(String(50), unique=True, nullable=False)
+    display_name = Column(String(50), unique=False, nullable=False)
     bio = Column(Text)
     created_at = Column(
         DateTime, default=lambda: datetime.utcnow() + timedelta(hours=9)

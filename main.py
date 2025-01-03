@@ -57,6 +57,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 
@@ -107,17 +108,7 @@ class TagCreate(BaseModel):
 )
 def get_questions(db: Session = Depends(get_db)):
     questions = read_questions(db)
-    return [
-        QuestionSchema(
-            id=q.id,
-            title=q.title,
-            user_id=str(q.user_id),
-            is_anonymous=q.is_anonymous,
-            content=q.content,
-            created_at=q.created_at,
-        )
-        for q in questions
-    ]
+    return [QuestionSchema.model_validate(q) for q in questions]
 
 
 # 2.質問の詳細を取得する
@@ -329,8 +320,8 @@ def get_users(db: Session = Depends(get_db)):
 @app.get(
     "/users/{id}/users",
 )
-def get_my_user(user_id: str, db: Session = Depends(get_db)):
-    user = read_my_user(db, user_id)
+def get_my_user(id: str, db: Session = Depends(get_db)):
+    user = read_my_user(db, id)
 
     # もし対象の質問が存在しない場合、エラーを返す
     if not user:
@@ -339,9 +330,21 @@ def get_my_user(user_id: str, db: Session = Depends(get_db)):
     return UserSchema(id=str(user.id), display_name=user.display_name, bio=user.bio)
 
 
+@app.get(
+    "/users/{id}/exists",
+)
+def exists_user(id: str, db: Session = Depends(get_db)):
+    user = read_my_user(db, id)
+
+    # もし対象の質問が存在しない場合、エラーを返す
+    if not user:
+        return {"exists": False}
+    return {"exists": True}
+
+
 # 2.ユーザを作成する
 @app.post(
-    "/users/",
+    "/users",
 )
 def post_user(user: UserCreate, db: Session = Depends(get_db)):
     post_user = create_user(db, user.id, user.display_name, user.bio)
@@ -349,13 +352,13 @@ def post_user(user: UserCreate, db: Session = Depends(get_db)):
 
 
 # 4.ユーザを削除する
-@app.delete("/users/{id}/")
+@app.delete("/users/{id}")
 def delete_user_endpoint(id: str, db: Session = Depends(get_db)):
     delete_user(db, id)
 
 
 # 5.ユーザを編集（更新）する
-@app.put("/users/{id}/")
+@app.put("/users/{id}")
 def update_user_endpoint(
     id: str,
     user: UserUpdate,
