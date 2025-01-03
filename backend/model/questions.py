@@ -3,8 +3,8 @@ from typing import List
 
 from backend.model.answers import Answer  # noqa
 from backend.model.base import Base
-from backend.model.bookmarks import Bookmark  # noqa
-from backend.model.likes import Like  # noqa
+from backend.model.bookmarks import BookmarkSchema
+from backend.model.likes import LikeSchema
 from backend.model.notifications import Notification  # noqa
 from backend.model.tags import Tag, TagSchema  # noqa
 from backend.model.users import UserSchema
@@ -53,6 +53,8 @@ class QuestionSchema(BaseModel):
     content: str
     created_at: datetime
     tags: List[TagSchema] = []
+    likes: List[LikeSchema]
+    bookmarks: List[BookmarkSchema]
 
     class Config:
         arbitrary_types_allowed = True

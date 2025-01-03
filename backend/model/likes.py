@@ -1,6 +1,8 @@
+import uuid
 from datetime import datetime, timedelta
 
 from backend.model.base import Base
+from pydantic import BaseModel
 from sqlalchemy import Column, DateTime, ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -26,3 +28,12 @@ class Like(Base):
     # user = relationship("User", back_populates="like")
     # question = relationship("Question", back_populates="like")
     # answer = relationship("Answer", back_populates="like")
+
+
+class LikeSchema(BaseModel):
+    id: int
+    user_id: uuid.UUID
+
+    class Config:
+        arbitrary_types_allowed = True
+        from_attributes = True

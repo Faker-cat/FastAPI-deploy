@@ -1,6 +1,8 @@
+import uuid
 from datetime import datetime
 
 from backend.model.base import Base
+from pydantic import BaseModel
 from sqlalchemy import Column, DateTime, ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -22,3 +24,12 @@ class Bookmark(Base):
     # リレーション：User と Question モデルとの関連を設定
     # user = relationship("User", back_populates="bookmark")
     # question = relationship("Question", back_populates="bookmark")
+
+
+class BookmarkSchema(BaseModel):
+    id: int
+    user_id: uuid.UUID
+
+    class Config:
+        arbitrary_types_allowed = True
+        from_attributes = True
