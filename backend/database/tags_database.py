@@ -46,3 +46,11 @@ def add_tag_to_question(db: Session, question_id: int, tag_ids: list):
         db.commit()
         db.refresh(question)
     return question
+
+    # 5. タグを取得する（get）
+
+
+def read_tags(db: Session, tag_id: list[int]):
+    # タグIDに基づいてタグ情報を取得
+    tags = db.query(Tag).where(Tag.id.in_(tag_id)).all()
+    return tags

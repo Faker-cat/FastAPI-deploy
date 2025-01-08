@@ -31,6 +31,7 @@ from backend.database.tags_database import (
     create_tag,
     delete_tag,
     read_tag,
+    read_tags,
 )
 from backend.database.users_database import (
     create_user,
@@ -66,6 +67,7 @@ class QuestionCreate(BaseModel):
     user_id: str
     is_anonymous: bool
     content: str
+    tag_id: list[int]
 
 
 class QuestionUpdate(BaseModel):
@@ -158,8 +160,14 @@ def get_my_questions(user_id: str, db: Session = Depends(get_db)):
     "/questions",
 )
 def post_question(question: QuestionCreate, db: Session = Depends(get_db)):
+    tags = read_tags(db, question.tag_id)
     post_question = create_question(
-        db, question.title, question.user_id, question.is_anonymous, question.content
+        db,
+        question.title,
+        question.user_id,
+        question.is_anonymous,
+        question.content,
+        tags,
     )
     return post_question
 

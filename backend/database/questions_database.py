@@ -23,9 +23,20 @@ def read_questions(db: Session):
 
 
 # 2. 新しい質問を作成する（post）
-def create_question(db: Session, title, user_id, is_anonymous, content):
+def create_question(
+    db: Session,
+    title,
+    user_id,
+    is_anonymous,
+    content,
+    tags,
+):
     question = Question(
-        title=title, user_id=user_id, is_anonymous=is_anonymous, content=content
+        title=title,
+        user_id=user_id,
+        is_anonymous=is_anonymous,
+        content=content,
+        tags=tags,
     )
     # 新しい質問をデータベースに追加
     db.add(question)
