@@ -18,7 +18,7 @@ def read_answers(db: Session):
 # 2. 特定の質問に対する回答を取得する（get）
 def read_question_answers(db: Session, question_id: int):
     # Question.IDに基づいて回答を取得
-    answers = db.query(Answer).filter(Answer.question_id == question_id).first()
+    answers = db.query(Answer).filter(Answer.question_id == question_id).all()
     return answers
 
 

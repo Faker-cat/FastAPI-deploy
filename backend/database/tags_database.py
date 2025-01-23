@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session
 
 
 # 1. タグを取得する（get）
-def read_tag(db: Session, tag_id: int):
+def read_tag(db: Session, tag_id: list[int]):
     # タグIDに基づいてタグ情報を取得
-    tag = db.query(Tag).filter(Tag.id == tag_id).first()
+    tag = db.query(Tag).filter(Tag.id.in_(tag_id)).all()
     return tag
 
 
@@ -50,7 +50,7 @@ def add_tag_to_question(db: Session, question_id: int, tag_ids: list):
     # 5. タグを取得する（get）
 
 
-def read_tags(db: Session, tag_id: list[int]):
+def read_tags(db: Session):
     # タグIDに基づいてタグ情報を取得
-    tags = db.query(Tag).where(Tag.id.in_(tag_id)).all()
+    tags = db.query(Tag).all()
     return tags

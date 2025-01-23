@@ -160,7 +160,7 @@ def get_my_questions(user_id: str, db: Session = Depends(get_db)):
     "/questions",
 )
 def post_question(question: QuestionCreate, db: Session = Depends(get_db)):
-    tags = read_tags(db, question.tag_id)
+    tags = read_tag(db, question.tag_id)
     post_question = create_question(
         db,
         question.title,
@@ -326,7 +326,7 @@ def get_users(db: Session = Depends(get_db)):
 
 # 2.自分のユーザ情報を取得する
 @app.get(
-    "/users/{id}/users",
+    "/users/{id}",
 )
 def get_my_user(id: str, db: Session = Depends(get_db)):
     user = read_my_user(db, id)
@@ -482,13 +482,22 @@ def remove_bookmark(
 
 
 # タグ
-# 1. タグを取得する
+# 0. タグを取得する
 @app.get("/tags/{tag_id}", response_model=TagSchema)
 def get_tag(tag_id: int, db: Session = Depends(get_db)):
     tag = read_tag(db, tag_id)
     if not tag:
         raise HTTPException(status_code=404, detail="Tag not found")
     return TagSchema(id=tag.id, name=tag.name)
+
+
+# 1. タグを取得する
+@app.get("/tags", response_model=list[TagSchema])
+def get_tags(db: Session = Depends(get_db)):
+    tags = read_tags(db)
+    if not tags:
+        raise HTTPException(status_code=404, detail="Tag not found")
+    return [TagSchema.model_validate(q) for q in tags]
 
 
 # 2. 新しいタグを作成する
