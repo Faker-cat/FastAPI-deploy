@@ -111,7 +111,7 @@ class TagCreate(BaseModel):
 )
 def get_questions(db: Session = Depends(get_db)):
     questions = read_questions(db)
-    return [QuestionSchema.model_validate(q) for q in questions]
+    return [QuestionSchema.model_validate(question) for question in questions]
 
 
 # 2.質問の詳細を取得する
