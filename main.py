@@ -77,6 +77,7 @@ class QuestionUpdate(BaseModel):
 
 
 class AnswerCreate(BaseModel):
+    question_id: int
     user_id: str
     is_anonymous: bool
     content: str
@@ -280,9 +281,9 @@ def get_my_answers(user_id: str, db: Session = Depends(get_db)):
 @app.post(
     "/answers",
 )
-def post_answer(question_id: int, answer: AnswerCreate, db: Session = Depends(get_db)):
+def post_answer(answer: AnswerCreate, db: Session = Depends(get_db)):
     post_answer = create_answer(
-        db, question_id, answer.user_id, answer.is_anonymous, answer.content
+        db, answer.question_id, answer.user_id, answer.is_anonymous, answer.content
     )
     return post_answer
 
